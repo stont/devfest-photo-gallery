@@ -1,0 +1,17 @@
+{
+  "projects": {},
+  "targets": {
+    "devfest25-photo-gellery": {
+      "hosting": {
+        "live": [
+          "devfest25photo"
+        ],
+        "dev": [
+          "devfest25-photo-gellery"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
