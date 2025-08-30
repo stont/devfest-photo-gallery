@@ -1,0 +1,32 @@
+{
+  "name": "gdg-photo-gallery",
+  "version": "1.0.0",
+  "description": "A real-time photo sharing platform for GDG DevFest events.",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "firebase",
+    "vue",
+    "vite",
+    "gdg",
+    "photos"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^10.1.0",
+    "fuse.js": "^7.1.0",
+    "qrcode": "^1.5.3",
+    "vue": "^3.3.4",
+    "vue-observe-visibility": "^1.0.0",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "vite": "^4.4.5"
+  }
+}
