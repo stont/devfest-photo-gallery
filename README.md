@@ -53,4 +53,3 @@ Want to improve the app? Clone the project, add your features, and create a PR s
 ## Live Demo
 
 Find the app at: [https://devfest25photo.web.app](https://devfest25photo.web.app)
-The dev/staging version is at: [https://devfest25-photo-gellery.web.app](https://devfest25-photo-gellery.web.app)
