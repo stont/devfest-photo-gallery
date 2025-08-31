@@ -54,7 +54,7 @@ onMounted(async () => {
 <template>
   <div class="explore-view">
     <div class="hero-section">
-      <h1>GDG DevFest Photo Gallery</h1>
+      <h1>#DevFest Photo Gallery</h1>
       <p>Explore photos from DevFest events around the globe.</p>
     </div>
 
