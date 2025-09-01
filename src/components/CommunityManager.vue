@@ -5,7 +5,7 @@ import { collection, addDoc, updateDoc, doc, serverTimestamp, query, where, getD
 import QRCode from 'qrcode';
 import Fuse from 'fuse.js';
 import allCommunities from '@/communities.json';
-import CountrySelector from './CountrySelector.vue';
+import CountrySelector from '@/components/CountrySelector.vue'; // Corrected the import path
 
 // --- Component State ---
 const chapterName = ref('');
@@ -20,7 +20,7 @@ const generatedQrCode = ref(null);
 
 // --- Fuse.js Search ---
 const fuse = new Fuse(allCommunities, {
-  keys: ['url'], // Search by the community name in the URL
+  keys: ['url'],
   threshold: 0.3,
   includeScore: true,
 });
@@ -28,7 +28,7 @@ const fuse = new Fuse(allCommunities, {
 watch(chapterName, (newName) => {
   if (newName.length > 2) {
     suggestions.value = fuse.search(newName)
-      .slice(0, 5) // Show top 5 matches
+      .slice(0, 5)
       .map(result => result.item);
   } else {
     suggestions.value = [];
@@ -38,10 +38,9 @@ watch(chapterName, (newName) => {
 function selectSuggestion(suggestion) {
   chapterName.value = suggestion.url.split('/')[4].replace(/-/g, ' ');
   country.value = suggestion.country;
-  suggestions.value = []; // Hide suggestions
+  suggestions.value = [];
 }
 
-// --- Main Function ---
 async function generateLink() {
   if (!chapterName.value || !country.value) {
     errorMsg.value = 'Please complete both fields.';
@@ -52,7 +51,6 @@ async function generateLink() {
   const fullCommunityName = chapterName.value.startsWith('GDG') ? chapterName.value.trim() : `GDG ${chapterName.value.trim()}`;
 
   try {
-    // 1. Check if this community already exists in Firestore
     const communitiesRef = collection(db, 'communities');
     const q = query(communitiesRef, where('name', '==', fullCommunityName), where('country', '==', country.value), limit(1));
     const querySnapshot = await getDocs(q);
@@ -60,10 +58,8 @@ async function generateLink() {
     let communityDocId;
 
     if (!querySnapshot.empty) {
-      // 2a. If it exists, get its ID
       communityDocId = querySnapshot.docs[0].id;
     } else {
-      // 2b. If it's new, create it and get the new ID
       const slug = `${fullCommunityName.toLowerCase().replace(/\s+/g, '-')}-${country.value.toLowerCase().replace(/\s+/g, '-')}`;
       const docRef = await addDoc(communitiesRef, {
         name: fullCommunityName,
@@ -74,7 +70,6 @@ async function generateLink() {
       communityDocId = docRef.id;
     }
 
-    // 3. Generate links and update the document (whether old or new)
     const uploadUrl = `${window.location.origin}/upload/${communityDocId}`;
     const qrCodeDataUrl = await QRCode.toDataURL(uploadUrl, { width: 300, margin: 2 });
 
@@ -83,8 +78,7 @@ async function generateLink() {
       uploadUrl: uploadUrl,
       lastGeneratedAt: serverTimestamp(),
     });
-
-    // 4. Show results
+    
     generatedUrl.value = uploadUrl;
     generatedQrCode.value = qrCodeDataUrl;
 
@@ -96,7 +90,6 @@ async function generateLink() {
   }
 }
 
-// --- Helper Functions ---
 function handleCountrySelected(selectedCountry) {
   country.value = selectedCountry;
 }
@@ -157,7 +150,6 @@ function createAnother() {
 </template>
 
 <style scoped>
-/* [Previous styles remain the same, with these additions] */
 .form {
   position: relative;
 }
