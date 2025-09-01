@@ -48,7 +48,7 @@ onMounted(() => {
 
     <footer class="app-footer">
       <p>
-        With ❤ by <a href="https://gdg.community.dev/gdg-ado-ekiti" target="_blank">GDG Ado-Ekiti</a> 🇳🇬 | <a href="https://sites.google.com/view/devfestavatarcreatorprivacy/home" target="_blank">Privacy</a>
+        With ❤️ by <a href="https://gdg.community.dev/gdg-ado-ekiti" target="_blank">GDG Ado-Ekiti</a> 🇳🇬 | <a href="https://sites.google.com/view/devfestphotogallery/home" target="_blank">Privacy</a>
       </p>
       <a href="https://github.com/stont/devfest-photo-gallery" target="_blank" class="open-source-link">
         open source

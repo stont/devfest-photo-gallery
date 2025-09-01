@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { db } from '@/firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { RouterLink } from 'vue-router';
+import CommunityUpload from '@/components/CommunityUpload.vue'; // Import the upload component
 
 const props = defineProps({
   communityId: {
@@ -14,7 +15,9 @@ const props = defineProps({
 const community = ref(null);
 const photos = ref([]);
 const isLoading = ref(true);
+const isUploadModalOpen = ref(false); // State to control the modal
 
+// Lightbox state
 const isLightboxOpen = ref(false);
 const currentImageIndex = ref(0);
 
@@ -30,6 +33,7 @@ onMounted(async () => {
     return;
   }
 
+  // Real-time listener for photos
   const photosQuery = query(
     collection(db, 'photos'),
     where('communityId', '==', props.communityId),
@@ -39,7 +43,6 @@ onMounted(async () => {
   onSnapshot(photosQuery, (snapshot) => {
     const fetchedPhotos = [];
     snapshot.forEach((doc) => {
-      // No longer need the 'loaded' property
       fetchedPhotos.push({ id: doc.id, ...doc.data() });
     });
     photos.value = fetchedPhotos;
@@ -52,28 +55,19 @@ function openLightbox(index) {
   currentImageIndex.value = index;
   isLightboxOpen.value = true;
 }
-
-function closeLightbox() {
-  isLightboxOpen.value = false;
-}
-
-function nextImage() {
-  currentImageIndex.value = (currentImageIndex.value + 1) % photos.value.length;
-}
-
-function prevImage() {
-  currentImageIndex.value = (currentImageIndex.value - 1 + photos.value.length) % photos.value.length;
-}
-
-const currentImage = computed(() => {
-  return photos.value[currentImageIndex.value];
-});
+function closeLightbox() { isLightboxOpen.value = false; }
+function nextImage() { currentImageIndex.value = (currentImageIndex.value + 1) % photos.value.length; }
+function prevImage() { currentImageIndex.value = (currentImageIndex.value - 1 + photos.value.length) % photos.value.length; }
+const currentImage = computed(() => photos.value[currentImageIndex.value]);
 </script>
 
 <template>
   <div class="community-view">
     <div v-if="community" class="header">
-      <RouterLink :to="`/country/${community.country}`" class="back-link">&larr; All Communities</RouterLink>
+      <div class="header-nav">
+        <RouterLink :to="`/country/${community.country}`" class="back-link">&larr; All Communities</RouterLink>
+        <button @click="isUploadModalOpen = true" class="upload-button">Upload Photo</button>
+      </div>
       <h1>{{ community.name }}, {{ community.country }}</h1>
       <p>{{ photos.length }} photos</p>
     </div>
@@ -89,12 +83,7 @@ const currentImage = computed(() => {
         class="photo-item"
         @click="openLightbox(index)"
       >
-        <!-- Directly bind the imageUrl to the src attribute -->
-        <img 
-          :src="photo.imageUrl" 
-          :alt="`Photo from ${community.name}`" 
-          class="gallery-image"
-        />
+        <img :src="photo.imageUrl" :alt="`Photo from ${community.name}`" class="gallery-image"/>
       </div>
     </div>
 
@@ -107,45 +96,70 @@ const currentImage = computed(() => {
       </div>
       <button class="lightbox-next" @click.stop="nextImage">&rsaquo;</button>
     </div>
+
+    <!-- Upload Modal -->
+    <div v-if="isUploadModalOpen" class="upload-modal-overlay">
+      <div class="upload-modal-content">
+        <button @click="isUploadModalOpen = false" class="close-modal-btn">&times;</button>
+        <CommunityUpload :communityId="communityId" />
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .header { margin-bottom: 2rem; }
-.header h1 { font-size: 2.5em; font-weight: 700; margin: 1rem 0 0.5rem; }
+.header-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.upload-button {
+  font-size: 0.9em;
+  padding: 8px 16px;
+}
+.header h1 { font-size: 2.5em; font-weight: 700; margin: 0 0 0.5rem; }
 .header p { font-size: 1.2em; color: var(--color-text-secondary); }
 .back-link { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.photo-item { cursor: pointer; border-radius: 8px; overflow: hidden; background-color: var(--color-surface); aspect-ratio: 1 / 1; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.photo-item:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+.gallery-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+.loading-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
 
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+/* Upload Modal Styles */
+.upload-modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
 }
-.photo-item {
-  cursor: pointer;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: var(--color-surface);
-  aspect-ratio: 1 / 1;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.photo-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
-.gallery-image {
+.upload-modal-content {
+  position: relative;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  max-width: 550px;
 }
-.loading-state {
-  text-align: center;
-  padding: 4rem;
-  color: var(--color-text-secondary);
+.close-modal-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--color-background);
+  color: white;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5em;
+  line-height: 1;
+  cursor: pointer;
 }
-
-/* Lightbox styles remain the same */
+/* Lightbox Styles */
 .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; }
 .lightbox-content { position: relative; max-width: 90vw; max-height: 90vh; }
 .lightbox-image { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }

@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { db } from '@/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { RouterLink } from 'vue-router';
+import Fuse from 'fuse.js';
 
 const props = defineProps({
   countryName: {
@@ -13,9 +14,15 @@ const props = defineProps({
 
 const communities = ref([]);
 const isLoading = ref(true);
+const searchQuery = ref('');
+
+let fuse;
+const fuseOptions = {
+  keys: ['name'],
+  threshold: 0.3,
+};
 
 onMounted(async () => {
-  // 1. Fetch all communities for the given country
   const communitiesQuery = query(
     collection(db, 'communities'),
     where('country', '==', props.countryName)
@@ -26,7 +33,6 @@ onMounted(async () => {
   communitySnapshot.forEach(doc => {
     const community = { id: doc.id, ...doc.data() };
     
-    // 2. For each community, create a promise to fetch its photo count
     const photoCountPromise = getDocs(query(
       collection(db, 'photos'),
       where('communityId', '==', community.id)
@@ -38,9 +44,16 @@ onMounted(async () => {
     communityPromises.push(photoCountPromise);
   });
 
-  // 3. Wait for all photo counts to be fetched
   communities.value = await Promise.all(communityPromises);
+  fuse = new Fuse(communities.value, fuseOptions); // Initialize Fuse.js
   isLoading.value = false;
+});
+
+const filteredCommunities = computed(() => {
+  if (!searchQuery.value) {
+    return communities.value;
+  }
+  return fuse.search(searchQuery.value).map(result => result.item);
 });
 </script>
 
@@ -52,13 +65,22 @@ onMounted(async () => {
       <p>Explore photos from GDG communities in {{ countryName }}.</p>
     </div>
 
+    <div class="search-wrapper">
+      <input 
+        type="text" 
+        v-model="searchQuery" 
+        :placeholder="`Search within ${countryName}...`"
+        class="search-input"
+      />
+    </div>
+
     <div v-if="isLoading" class="loading-state">
       <p>Loading communities...</p>
     </div>
 
     <div v-else class="communities-list">
       <RouterLink 
-        v-for="community in communities" 
+        v-for="community in filteredCommunities" 
         :key="community.id"
         :to="`/community/${community.id}`"
         class="community-item"
@@ -69,28 +91,32 @@ onMounted(async () => {
         </div>
         <span class="arrow">&rarr;</span>
       </RouterLink>
+      <div v-if="filteredCommunities.length === 0" class="empty-state">
+        <p>No communities found matching your search.</p>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.header {
+.header { margin-bottom: 2rem; }
+.header h1 { font-size: 2.5em; font-weight: 700; margin: 1rem 0 0.5rem; }
+.header p { font-size: 1.2em; color: var(--color-text-secondary); }
+.back-link { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+
+.search-wrapper {
   margin-bottom: 2rem;
 }
-.header h1 {
-  font-size: 2.5em;
-  font-weight: 700;
-  margin: 1rem 0 0.5rem;
-}
-.header p {
-  font-size: 1.2em;
-  color: var(--color-text-secondary);
-}
 
-.back-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.9em;
 }
 
 .communities-list {
@@ -116,21 +142,11 @@ onMounted(async () => {
   transform: translateY(-3px);
 }
 
-.community-info h3 {
-  margin: 0 0 0.25rem;
-}
+.community-info h3 { margin: 0 0 0.25rem; }
+.community-info span { color: var(--color-text-secondary); font-size: 0.9em; }
+.arrow { font-size: 1.5em; color: var(--color-primary); }
 
-.community-info span {
-  color: var(--color-text-secondary);
-  font-size: 0.9em;
-}
-
-.arrow {
-  font-size: 1.5em;
-  color: var(--color-primary);
-}
-
-.loading-state {
+.loading-state, .empty-state {
   text-align: center;
   padding: 4rem;
   color: var(--color-text-secondary);
