@@ -10,20 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v1
+      - run: npm ci && npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          node-version: '20'
-      - name: Install Dependencies
-        run: npm install
-      - name: Build
-        run: npm run build
-      - name: Deploy to Firebase
-        uses: w9jds/firebase-action@master
-        with:
-          action: deploy
-          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
-          firebase_token: ${{ secrets.FIREBASE_TOKEN }}
-          channel_id: live
-        env:
-          FIREBASE_CLI_PREVIEWS: hostingchannels
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEVFEST25_PHOTO_GELLERY }}'
+          channelId: live
+          projectId: devfest25-photo-gellery
