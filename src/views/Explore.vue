@@ -66,7 +66,7 @@ const filteredCountries = computed(() => {
 <template>
   <div class="explore-view">
     <div class="hero-section">
-      <h1>GDG DevFest Photo Gallery</h1>
+      <h1>#DevFest Photo Gallery</h1>
       <p>Explore photos from DevFest events around the globe.</p>
     </div>
 
@@ -91,7 +91,7 @@ const filteredCountries = computed(() => {
           :to="`/country/${country.name}`"
           class="country-card"
         >
-          <img :src="country.coverImage" class="cover-image" alt=""/>
+          <img :src="country.coverImage" class="cover-image" alt="" loading="lazy"/>
           <div class="card-overlay">
             <h3>{{ country.name }}</h3>
             <span>{{ country.photoCount }} photos</span>
@@ -113,7 +113,7 @@ const filteredCountries = computed(() => {
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
 .section-header h2 { margin: 0; }
 .search-input { width: 100%; max-width: 300px; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--color-border); background-color: var(--color-background); color: var(--color-text-primary); font-size: 0.9em; }
-.countries-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+.countries-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.5rem; }
 .country-card { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 4 / 3; color: white; text-decoration: none; display: block; background-color: var(--color-surface); transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .country-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.25); }
 .cover-image { width: 100%; height: 100%; object-fit: cover; }
@@ -122,4 +122,17 @@ const filteredCountries = computed(() => {
 .card-overlay span { font-size: 0.9em; opacity: 0.8; }
 .loading-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
 .empty-state { text-align: center; padding: 2rem; color: var(--color-text-secondary); }
+
+@media (max-width: 600px) {
+  .hero-section h1 {
+    font-size: 2em;
+  }
+  .countries-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .countries-section {
+    padding: 1.5rem;
+  }
+}
 </style>

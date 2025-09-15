@@ -1,25 +1,23 @@
-/* Import Google's Roboto font */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-/* Define a consistent color palette */
 :root {
   --color-background: #1a1a1a;
   --color-surface: #2c2c2c;
-  --color-primary: #4285F4; /* Google Blue */
+  --color-primary: #4285F4;
   --color-primary-hover: #5a95f5;
   --color-text-primary: #e0e0e0;
   --color-text-secondary: #aaaaaa;
   --color-border: #444444;
-
   --font-family-base: 'Roboto', sans-serif;
 }
 
-/* Global styles */
 body {
   margin: 0;
   font-family: var(--font-family-base);
   background-color: var(--color-background);
   color: var(--color-text-primary);
+  background-image: url('/background-pattern.svg');
+  background-repeat: repeat;
 }
 
 #app {
@@ -28,7 +26,6 @@ body {
   padding: 2rem;
 }
 
-/* General component styles */
 h1, h2 {
   font-weight: 500;
 }

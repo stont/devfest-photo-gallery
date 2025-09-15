@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { db } from '@/firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { RouterLink } from 'vue-router';
-import CommunityUpload from '@/components/CommunityUpload.vue'; // Import the upload component
+import CommunityUpload from '@/components/CommunityUpload.vue'; 
 
 const props = defineProps({
   communityId: {
@@ -15,7 +15,7 @@ const props = defineProps({
 const community = ref(null);
 const photos = ref([]);
 const isLoading = ref(true);
-const isUploadModalOpen = ref(false); // State to control the modal
+const isUploadModalOpen = ref(false); 
 
 // Lightbox state
 const isLightboxOpen = ref(false);
@@ -83,7 +83,7 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
         class="photo-item"
         @click="openLightbox(index)"
       >
-        <img :src="photo.imageUrl" :alt="`Photo from ${community.name}`" class="gallery-image"/>
+        <img :src="photo.imageUrl" :alt="`Photo from ${community.name}`" class="gallery-image" loading="lazy"/>
       </div>
     </div>
 
@@ -92,7 +92,7 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
       <button class="lightbox-close" @click="closeLightbox">&times;</button>
       <button class="lightbox-prev" @click.stop="prevImage">&lsaquo;</button>
       <div class="lightbox-content">
-        <img :src="currentImage.imageUrl" :alt="`Photo from ${community.name}`" class="lightbox-image"/>
+        <img :src="currentImage.imageUrl" :alt="`Photo from ${community.name}`" class="lightbox-image" loading="lazy"/>
       </div>
       <button class="lightbox-next" @click.stop="nextImage">&rsaquo;</button>
     </div>

@@ -1,45 +1,17 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref } from 'vue';
 import { db } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
 import QRCode from 'qrcode';
-import Fuse from 'fuse.js';
-import allCommunities from '@/communities.json';
-import CountrySelector from '@/components/CountrySelector.vue'; // Corrected the import path
+import CountrySelector from '@/components/CountrySelector.vue';
 
-// --- Component State ---
 const chapterName = ref('');
 const country = ref('');
-const suggestions = ref([]);
 const isCreating = ref(false);
 const errorMsg = ref('');
 
-// --- Results State ---
 const generatedUrl = ref(null);
 const generatedQrCode = ref(null);
-
-// --- Fuse.js Search ---
-const fuse = new Fuse(allCommunities, {
-  keys: ['url'],
-  threshold: 0.3,
-  includeScore: true,
-});
-
-watch(chapterName, (newName) => {
-  if (newName.length > 2) {
-    suggestions.value = fuse.search(newName)
-      .slice(0, 5)
-      .map(result => result.item);
-  } else {
-    suggestions.value = [];
-  }
-});
-
-function selectSuggestion(suggestion) {
-  chapterName.value = suggestion.url.split('/')[4].replace(/-/g, ' ');
-  country.value = suggestion.country;
-  suggestions.value = [];
-}
 
 async function generateLink() {
   if (!chapterName.value || !country.value) {
@@ -114,11 +86,6 @@ function createAnother() {
             <span>GDG</span>
             <input type="text" v-model="chapterName" @input="errorMsg = ''" placeholder="Chapter Name..." />
           </div>
-          <ul v-if="suggestions.length > 0" class="suggestions-list">
-            <li v-for="suggestion in suggestions" :key="suggestion.url" @click="selectSuggestion(suggestion)">
-              {{ suggestion.url.split('/')[4].replace(/-/g, ' ') }} ({{ suggestion.country }})
-            </li>
-          </ul>
         </div>
         
         <CountrySelector @countrySelected="handleCountrySelected">
@@ -155,31 +122,6 @@ function createAnother() {
 }
 .autocomplete-wrapper {
   position: relative;
-}
-.suggestions-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  z-index: 10;
-  max-height: 200px;
-  overflow-y: auto;
-}
-.suggestions-list li {
-  padding: 12px 15px;
-  cursor: pointer;
-  text-align: left;
-  text-transform: capitalize;
-}
-.suggestions-list li:hover {
-  background-color: var(--color-background);
 }
 .input-with-prefix {
   display: flex;
