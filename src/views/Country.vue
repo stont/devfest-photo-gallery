@@ -4,7 +4,9 @@ import { useRoute } from 'vue-router';
 import { db } from '@/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { RouterLink } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const route = useRoute();
 const countryName = route.params.countryName;
 
@@ -48,20 +50,20 @@ const filteredCommunities = computed(() => {
 <template>
   <div class="country-view">
     <div class="page-header">
-      <RouterLink to="/" class="back-link">&larr; All Countries</RouterLink>
+      <RouterLink to="/" class="back-link">&larr; {{ t('allCountries') }}</RouterLink>
       <h1>{{ countryName }}</h1>
-      <p>Explore photos from GDG communities in {{ countryName }}.</p>
+      <p>{{ t('exploreCountry', { countryName }) }}</p>
     </div>
 
     <div v-if="isLoading" class="loading-state">
-      <p>Loading communities...</p>
+      <p>{{ t('loadingCommunities') }}</p>
     </div>
 
     <div v-else class="communities-section">
        <input 
         type="text" 
         v-model="searchQuery" 
-        :placeholder="`Search within ${countryName}...`"
+        :placeholder="t('searchCommunity', { countryName })"
         class="search-input"
       />
 
@@ -74,14 +76,14 @@ const filteredCommunities = computed(() => {
         >
           <div>
             <h3>{{ community.name }}</h3>
-            <span>{{ community.photoCount }} photos</span>
+            <span>{{ community.photoCount }} {{ t('photos') }}</span>
           </div>
           <span class="arrow">&rarr;</span>
         </RouterLink>
       </div>
 
        <div v-if="filteredCommunities.length === 0" class="empty-state">
-        <p>No communities found for this country yet.</p>
+        <p>{{ t('noCommunities') }}</p>
       </div>
     </div>
   </div>

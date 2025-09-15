@@ -4,7 +4,9 @@ import { db } from '@/firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { RouterLink } from 'vue-router';
 import CommunityUpload from '@/components/CommunityUpload.vue'; 
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const props = defineProps({
   communityId: {
     type: String,
@@ -16,8 +18,8 @@ const community = ref(null);
 const photos = ref([]);
 const isLoading = ref(true);
 const isUploadModalOpen = ref(false); 
+const isActionMenuOpen = ref(false);
 
-// Lightbox state
 const isLightboxOpen = ref(false);
 const currentImageIndex = ref(0);
 
@@ -26,14 +28,13 @@ onMounted(async () => {
   const communityDocSnap = await getDoc(communityDocRef);
 
   if (communityDocSnap.exists()) {
-    community.value = communityDocSnap.data();
+    community.value = { id: communityDocSnap.id, ...communityDocSnap.data() };
   } else {
     console.error("Community not found!");
     isLoading.value = false;
     return;
   }
 
-  // Real-time listener for photos
   const photosQuery = query(
     collection(db, 'photos'),
     where('communityId', '==', props.communityId),
@@ -50,7 +51,6 @@ onMounted(async () => {
   });
 });
 
-// --- Lightbox Methods ---
 function openLightbox(index) {
   currentImageIndex.value = index;
   isLightboxOpen.value = true;
@@ -59,21 +59,50 @@ function closeLightbox() { isLightboxOpen.value = false; }
 function nextImage() { currentImageIndex.value = (currentImageIndex.value + 1) % photos.value.length; }
 function prevImage() { currentImageIndex.value = (currentImageIndex.value - 1 + photos.value.length) % photos.value.length; }
 const currentImage = computed(() => photos.value[currentImageIndex.value]);
+
+function copyUploadLink() {
+  navigator.clipboard.writeText(community.value.uploadUrl);
+  alert('Upload link copied to clipboard!');
+  isActionMenuOpen.value = false;
+}
+
+function downloadQRCode() {
+  const link = document.createElement('a');
+  link.href = community.value.qrCodeUrl;
+  link.download = `${community.value.name}-qr-code.png`;
+  link.click();
+  isActionMenuOpen.value = false;
+}
 </script>
 
 <template>
   <div class="community-view">
     <div v-if="community" class="header">
       <div class="header-nav">
-        <RouterLink :to="`/country/${community.country}`" class="back-link">&larr; All Communities</RouterLink>
-        <button @click="isUploadModalOpen = true" class="upload-button">Upload Photo</button>
+        <RouterLink :to="`/country/${community.country}`" class="back-link">&larr; {{ t('allCountries') }}</RouterLink>
+        <div class="header-actions">
+          <div class="desktop-actions">
+            <button @click="copyUploadLink" class="secondary-btn">{{ t('copyLink') }}</button>
+            <button @click="downloadQRCode" class="secondary-btn">{{ t('downloadQR') }}</button>
+          </div>
+          <button @click="isUploadModalOpen = true" class="upload-button">{{ t('uploadPhoto') }}</button>
+          <div class="mobile-actions">
+            <button @click="isActionMenuOpen = !isActionMenuOpen" class="kebab-menu">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+            </button>
+            <div v-if="isActionMenuOpen" class="action-menu">
+              <a href="#" @click.prevent="copyUploadLink">{{ t('copyLink') }}</a>
+              <a href="#" @click.prevent="downloadQRCode">{{ t('downloadQR') }}</a>
+            </div>
+          </div>
+        </div>
       </div>
       <h1>{{ community.name }}, {{ community.country }}</h1>
-      <p>{{ photos.length }} photos</p>
+      <p>{{ photos.length }} {{ t('photos') }}</p>
     </div>
 
     <div v-if="isLoading" class="loading-state">
-      <p>Loading photos...</p>
+      <p>{{ t('loadingPhotos') }}</p>
     </div>
 
     <div v-else class="photo-grid">
@@ -87,7 +116,6 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
       </div>
     </div>
 
-    <!-- Lightbox Modal -->
     <div v-if="isLightboxOpen" class="lightbox-overlay" @click.self="closeLightbox">
       <button class="lightbox-close" @click="closeLightbox">&times;</button>
       <button class="lightbox-prev" @click.stop="prevImage">&lsaquo;</button>
@@ -97,11 +125,10 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
       <button class="lightbox-next" @click.stop="nextImage">&rsaquo;</button>
     </div>
 
-    <!-- Upload Modal -->
     <div v-if="isUploadModalOpen" class="upload-modal-overlay">
       <div class="upload-modal-content">
         <button @click="isUploadModalOpen = false" class="close-modal-btn">&times;</button>
-        <CommunityUpload :communityId="communityId" />
+        <CommunityUpload :communityId="communityId" @close="isUploadModalOpen = false" />
       </div>
     </div>
   </div>
@@ -115,9 +142,21 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
   align-items: center;
   margin-bottom: 1rem;
 }
-.upload-button {
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+.upload-button, .secondary-btn {
   font-size: 0.9em;
   padding: 8px 16px;
+}
+.secondary-btn {
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+.secondary-btn:hover {
+  background-color: var(--color-surface);
 }
 .header h1 { font-size: 2.5em; font-weight: 700; margin: 0 0 0.5rem; }
 .header p { font-size: 1.2em; color: var(--color-text-secondary); }
@@ -128,7 +167,6 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
 .gallery-image { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loading-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
 
-/* Upload Modal Styles */
 .upload-modal-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -159,7 +197,6 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
   line-height: 1;
   cursor: pointer;
 }
-/* Lightbox Styles */
 .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; }
 .lightbox-content { position: relative; max-width: 90vw; max-height: 90vh; }
 .lightbox-image { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
@@ -168,4 +205,56 @@ const currentImage = computed(() => photos.value[currentImageIndex.value]);
 .lightbox-prev, .lightbox-next { top: 50%; transform: translateY(-50%); }
 .lightbox-prev { left: 20px; }
 .lightbox-next { right: 20px; }
+
+.mobile-actions {
+  position: relative;
+  display: none;
+}
+
+.kebab-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 0;
+}
+
+.action-menu {
+  position: absolute;
+  top: 150%;
+  right: 0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.action-menu a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.action-menu a:hover {
+  background-color: var(--color-background);
+}
+
+.desktop-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .desktop-actions {
+    display: none;
+  }
+  .mobile-actions {
+    display: block;
+  }
+}
 </style>

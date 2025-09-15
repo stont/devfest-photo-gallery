@@ -4,7 +4,9 @@ import { db } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
 import QRCode from 'qrcode';
 import CountrySelector from '@/components/CountrySelector.vue';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const chapterName = ref('');
 const country = ref('');
 const isCreating = ref(false);
@@ -77,33 +79,33 @@ function createAnother() {
   <div class="card">
     <div v-if="!generatedUrl" class="form-container">
       <div class="card-header">
-        <h2>Generate Community Link</h2>
-        <p>Select your community, or create a new one to get an upload link.</p>
+        <h2>{{ t('generateLink') }}</h2>
+        <p>{{ t('generateLinkSubtitle') }}</p>
       </div>
       <div class="form">
         <div class="autocomplete-wrapper">
           <div class="input-with-prefix">
             <span>GDG</span>
-            <input type="text" v-model="chapterName" @input="errorMsg = ''" placeholder="Chapter Name..." />
+            <input type="text" v-model="chapterName" @input="errorMsg = ''" :placeholder="t('chapterName')" />
           </div>
         </div>
         
         <CountrySelector @countrySelected="handleCountrySelected">
-          {{ country || 'Select a Country' }}
+          {{ country || t('selectCountry') }}
         </CountrySelector>
         
         <p v-if="errorMsg" class="error-text">{{ errorMsg }}</p>
 
         <button @click="generateLink" :disabled="isCreating || !chapterName || !country">
-          {{ isCreating ? 'Generating...' : 'Generate Upload Link' }}
+          {{ isCreating ? t('generating') : t('generateUploadLink') }}
         </button>
       </div>
     </div>
 
     <div v-else class="results-container">
       <div class="card-header">
-        <h2>Your Link is Ready!</h2>
-        <p>Display this QR code or share the link at your event.</p>
+        <h2>{{ t('linkReady') }}</h2>
+        <p>{{ t('linkReadySubtitle') }}</p>
       </div>
       <div class="qr-code-wrapper">
         <img :src="generatedQrCode" alt="Generated QR Code" />
@@ -111,7 +113,7 @@ function createAnother() {
       <div class="generated-link">
         <input type="text" :value="generatedUrl" readonly />
       </div>
-      <button @click="createAnother">Generate for Another Community</button>
+      <button @click="createAnother">{{ t('generateAnother') }}</button>
     </div>
   </div>
 </template>

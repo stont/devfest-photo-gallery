@@ -1,25 +1,28 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'; // Import nextTick
+import { ref, onMounted, watch, nextTick } from 'vue'; 
 import { db, storage } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
+const { t } = useI18n();
 const props = defineProps(['communityId']);
+const emit = defineEmits(['close']);
+const router = useRouter();
+
 const community = ref(null);
 const selectedFile = ref(null);
 const imagePreviewUrl = ref(null);
 const uploadProgress = ref(0);
 const isUploading = ref(false);
 const uploadComplete = ref(false);
-
-// Refs for the camera functionality
+const uploadedImageUrl = ref(null);
 const isCameraOpen = ref(false);
 const videoEl = ref(null);
 let mediaStream = null;
-const facingMode = ref('environment'); // 'environment' for rear, 'user' for front
-
-// Ref for the hidden file input
+const facingMode = ref('environment');
 const fileInput = ref(null);
 
 onMounted(async () => {
@@ -51,7 +54,6 @@ function openGallery() {
 }
 
 async function openCamera() {
-  // Ensure any old streams are stopped
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
   }
@@ -63,10 +65,8 @@ async function openCamera() {
     });
     isCameraOpen.value = true;
     
-    // Wait for the DOM to update with the <video> element
     await nextTick();
 
-    // Now, reliably attach the stream
     if (videoEl.value) {
       videoEl.value.srcObject = mediaStream;
     }
@@ -86,7 +86,6 @@ function closeCamera() {
 
 function switchCamera() {
   facingMode.value = facingMode.value === 'environment' ? 'user' : 'environment';
-  // Re-open the camera with the new setting
   openCamera();
 }
 
@@ -127,6 +126,7 @@ async function uploadFile() {
         communityId: props.communityId,
         createdAt: serverTimestamp()
       });
+      uploadedImageUrl.value = url;
       uploadComplete.value = true;
       isUploading.value = false;
       selectedFile.value = null;
@@ -138,6 +138,12 @@ function resetUploader() {
   selectedFile.value = null;
   uploadComplete.value = false;
   uploadProgress.value = 0;
+  uploadedImageUrl.value = null;
+}
+
+function viewGallery() {
+  emit('close');
+  router.push(`/community/${props.communityId}`);
 }
 </script>
 
@@ -145,46 +151,49 @@ function resetUploader() {
   <div class="card">
     <div v-if="community">
       <div v-if="imagePreviewUrl">
-        <div class="card-header"><h2>Confirm Your Photo</h2></div>
+        <div class="card-header"><h2>{{ t('uploadTitle', { communityName: community.name }) }}</h2></div>
         <img :src="imagePreviewUrl" class="image-preview" alt="Selected photo preview"/>
         <div class="action-buttons">
           <button @click="uploadFile" :disabled="isUploading">
-            {{ isUploading ? `Uploading (${Math.round(uploadProgress)}%)...` : 'Upload' }}
+            {{ isUploading ? `${t('generating')} (${Math.round(uploadProgress)}%)...` : t('uploadPhoto') }}
           </button>
-          <button @click="resetUploader" class="secondary" :disabled="isUploading">Cancel</button>
+          <button @click="resetUploader" class="secondary" :disabled="isUploading">{{ t('cancel') }}</button>
         </div>
       </div>
       
       <div v-else-if="uploadComplete">
         <div class="card-header">
-          <h2>Upload Successful!</h2>
-          <p>Your photo has been added to the {{ community.name }} gallery.</p>
+          <h2>{{ t('uploadComplete') }}</h2>
+          <p>{{ t('uploadCompleteSubtitle', { communityName: community.name }) }}</p>
         </div>
-        <button @click="resetUploader">Upload Another Photo</button>
+        <img :src="uploadedImageUrl" class="image-preview" alt="Uploaded photo"/>
+        <div class="action-buttons">
+          <button @click="resetUploader">{{ t('Upload Another') }}</button>
+          <button @click="viewGallery" class="secondary">{{ t('viewGallery') }}</button>
+        </div>
       </div>
 
       <div v-else>
         <div class="card-header">
-          <h2>Upload to {{ community.name }}</h2>
-          <p>Share your favorite moments from the event!</p>
+          <h2>{{ t('uploadTitle', { communityName: community.name }) }}</h2>
+          <p>{{ t('uploadSubtitle') }}</p>
         </div>
         <div class="action-buttons">
-          <button @click="openCamera">Take Photo</button>
-          <button @click="openGallery" class="secondary">Choose from Gallery</button>
+          <button @click="openCamera">{{ t('Take Photo') }}</button>
+          <button @click="openGallery" class="secondary">{{ t('chooseFromGallery') }}</button>
         </div>
       </div>
     </div>
-    <div v-else class="loading-state"><p>Loading community details...</p></div>
+    <div v-else class="loading-state"><p>{{ t('loadingCommunities') }}</p></div>
     <input type="file" @change="handleFileChange" accept="image/*" ref="fileInput" hidden/>
   </div>
 
-  <!-- Camera View Overlay -->
   <div v-if="isCameraOpen" class="camera-overlay">
     <video ref="videoEl" autoplay playsinline class="camera-feed"></video>
     <div class="camera-controls">
-      <button @click="switchCamera" class="control-btn switch-btn" title="Switch Camera"></button>
+      <button @click="switchCamera" class="control-btn switch-btn" :title="t('switchCamera')"></button>
       <button @click="takeSnapshot" class="capture-btn"></button>
-      <button @click="closeCamera" class="control-btn close-btn">Cancel</button>
+      <button @click="closeCamera" class="control-btn close-btn">{{ t('cancel') }}</button>
     </div>
   </div>
 </template>
@@ -203,12 +212,11 @@ function resetUploader() {
 .card-header h2 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1.8em; }
 .card-header p { color: var(--color-text-secondary); margin: 0; }
 .action-buttons { display: flex; flex-direction: column; gap: 1rem; }
-button.secondary { background-color: transparent; border: 1px solid var(--color-border); color: var(--color-text-primary); }
-button.secondary:hover { background-color: var(--color-background); }
+button.secondary, .button.secondary { background-color: transparent; border: 1px solid var(--color-border); color: var(--color-text-primary); text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 1em; }
+button.secondary:hover, .button.secondary:hover { background-color: var(--color-background); }
 .image-preview { max-width: 100%; border-radius: 8px; margin-bottom: 1.5rem; }
 .loading-state { color: var(--color-text-secondary); }
 
-/* Camera Styles */
 .camera-overlay {
   position: fixed;
   top: 0; left: 0;

@@ -6,6 +6,7 @@ const routes = [
     name: 'Explore',
     component: () => import('./views/Explore.vue'),
   },
+  
   {
     path: '/create',
     name: 'Create',

@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { db } from '@/firebase';
-import { collection, query, getDocs, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { RouterLink } from 'vue-router';
 import Fuse from 'fuse.js';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const countries = ref([]);
 const isLoading = ref(true);
 const searchQuery = ref('');
@@ -66,21 +68,21 @@ const filteredCountries = computed(() => {
 <template>
   <div class="explore-view">
     <div class="hero-section">
-      <h1>#DevFest Photo Gallery</h1>
-      <p>Explore photos from DevFest events around the globe.</p>
+      <h1>{{ t('galleryTitle') }}</h1>
+      <p>{{ t('gallerySubtitle') }}</p>
     </div>
 
     <div v-if="isLoading" class="loading-state">
-      <p>Loading galleries...</p>
+      <p>{{ t('loadingGalleries') }}</p>
     </div>
     
     <div v-else class="countries-section">
       <div class="section-header">
-        <h2>Countries</h2>
+        <h2>{{ t('countries') }}</h2>
         <input 
           type="text" 
           v-model="searchQuery" 
-          placeholder="Search for a country..."
+          :placeholder="t('searchCountry')"
           class="search-input"
         />
       </div>
@@ -94,12 +96,12 @@ const filteredCountries = computed(() => {
           <img :src="country.coverImage" class="cover-image" alt="" loading="lazy"/>
           <div class="card-overlay">
             <h3>{{ country.name }}</h3>
-            <span>{{ country.photoCount }} photos</span>
+            <span>{{ country.photoCount }} {{ t('photos') }}</span>
           </div>
         </RouterLink>
       </div>
        <div v-if="filteredCountries.length === 0" class="empty-state">
-        <p>No countries found matching your search.</p>
+        <p>{{ t('noCountries') }}</p>
       </div>
     </div>
   </div>
