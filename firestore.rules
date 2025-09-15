@@ -3,14 +3,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow read/write access to all documents to anyone signed in to the application
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
   }
-}
-
-// Allow the clearFirestore.mjs script to delete communities
-match /communities/{communityId} {
-  allow delete: if true;
 }
