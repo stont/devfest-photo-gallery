@@ -46,6 +46,10 @@ A real-time, open-source photo sharing platform for #DevFest events worldwide. T
     npm run dev
     ```
 
+### 2025
+- [Olorunfemi Davis](https://github.com/olorunfemidavis) (GDG Ado-Ekiti Mentor)
+
+
 ## Contributing
 
 Want to improve the app? Clone the project, add your features, and create a PR so we can review and merge your changes!
