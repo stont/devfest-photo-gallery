@@ -53,8 +53,12 @@ A real-time, open-source photo sharing platform for #DevFest events worldwide. T
 
 ## Contributing
 
-Want to improve the app? Clone the project, add your features, and create a PR so we can review and merge your changes!
+Pull requests and suggestions are welcome! See the [GitHub repo](https://github.com/stont/devfest-photo-gallery).
 
 ## Live Demo
 
 Find the app at: [https://devfest25photo.web.app](https://devfest25photo.web.app)
+
+
+---
+With ❤ by [GDG Ado-Ekiti](https://gdg.community.dev/gdg-ado-ekiti) 🇳🇬
