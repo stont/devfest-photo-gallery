@@ -49,6 +49,7 @@ A real-time, open-source photo sharing platform for #DevFest events worldwide. T
 ## Contributors
 - [Olorunfemi Davis](https://github.com/olorunfemidavis) (GDG Ado-Ekiti Mentor)
 
+##
 
 ## Contributing
 
