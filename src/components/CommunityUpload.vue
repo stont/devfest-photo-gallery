@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'; 
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { db, storage } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -102,13 +102,57 @@ function takeSnapshot() {
   }, 'image/jpeg');
 }
 
+async function addWatermark(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        ctx.drawImage(img, 0, 0);
+
+        const watermarkText = `📍 ${community.value.name}, ${community.value.country} 2025`;
+        const fontSize = Math.max(24, Math.min(img.width / 25, 40));
+        const padding = fontSize * 0.5;
+        const barHeight = fontSize + padding * 2;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, canvas.height - barHeight, canvas.width, barHeight);
+
+        ctx.font = `${fontSize}px sans-serif`;
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.fillText(watermarkText, canvas.width / 2, canvas.height - barHeight / 2);
+
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', 0.9);
+      };
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function uploadFile() {
   if (!selectedFile.value) return;
   
   isUploading.value = true;
-  const fileToUpload = selectedFile.value;
 
-  const fileRef = storageRef(storage, `photos/${props.communityId}/${Date.now()}_${fileToUpload.name}`);
+  const watermarkedBlob = await addWatermark(selectedFile.value);
+  const fileToUpload = watermarkedBlob;
+  const fileName = `${Date.now()}_${selectedFile.value.name.replace(/\s+/g, '-')}`;
+
+  const fileRef = storageRef(storage, `photos/${props.communityId}/${fileName}`);
   const uploadTask = uploadBytesResumable(fileRef, fileToUpload);
 
   uploadTask.on('state_changed',
@@ -168,7 +212,7 @@ function viewGallery() {
         </div>
         <img :src="uploadedImageUrl" class="image-preview" alt="Uploaded photo"/>
         <div class="action-buttons">
-          <button @click="resetUploader">{{ t('Upload Another') }}</button>
+          <button @click="resetUploader">{{ t('uploadAnother') }}</button>
           <button @click="viewGallery" class="secondary">{{ t('viewGallery') }}</button>
         </div>
       </div>
@@ -179,7 +223,7 @@ function viewGallery() {
           <p>{{ t('uploadSubtitle') }}</p>
         </div>
         <div class="action-buttons">
-          <button @click="openCamera">{{ t('Take Photo') }}</button>
+          <button @click="openCamera">{{ t('takePhoto') }}</button>
           <button @click="openGallery" class="secondary">{{ t('chooseFromGallery') }}</button>
         </div>
       </div>
